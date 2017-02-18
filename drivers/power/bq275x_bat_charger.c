@@ -2092,7 +2092,7 @@ static int bq27531_charge_ic_reset(void)
         if(ret)
                 pr_err("%s: set charging CE failed %d\n", __func__, ret);
 
-	ret = bq27531_op_set_input_limit(bqdi, IINLIM_2000);
+	ret = bq27531_op_set_input_limit(bqdi, IINLIM_3000);
         if(ret)
                 pr_err("%s: set charging input power limit failed %d\n", __func__, ret);
 
@@ -2883,12 +2883,12 @@ static int bq27531_config_charging_current(struct bq27x00_device_info *di, int l
         case POWER_SUPPLY_TYPE_USB_DCP:
         case POWER_SUPPLY_TYPE_UNKNOWN:
 		if((level && !g_call_status) || (!boot_done))
-			bq27531_op_set_input_limit(di, IINLIM_2000);
+			bq27531_op_set_input_limit(di, IINLIM_3000);
 		else {
 			if (g_call_status)
 				bq27531_op_set_input_limit(di, IINLIM_900);
 			else
-				bq27531_op_set_input_limit(di, IINLIM_1500);
+				bq27531_op_set_input_limit(di, IINLIM_3000);
 		}
 		break;
         case POWER_SUPPLY_TYPE_USB:
