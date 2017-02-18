@@ -21,7 +21,7 @@ RADIOACTIVE_VER="$BASE_RADIOACTIVE_VER$VER"
 
 # Vars
 export LOCALVERSION=~`echo $RADIOACTIVE_VER`
-export CROSS_COMPILE=${HOME}/Android/toolchains/linaro4.9/bin/arm-eabi-
+export CROSS_COMPILE=${HOME}/Android/toolchain/arm-cortex_a15-linux-gnueabihf-linaro_4.9.4-2015.06/bin/arm-cortex_a15-linux-gnueabihf-
 export ARCH=arm
 export SUBARCH=arm
 export KBUILD_BUILD_USER=${USER}
@@ -29,11 +29,11 @@ export KBUILD_BUILD_HOST=${HOST}
 
 # Paths
 KERNEL_DIR=`pwd`
-REPACK_DIR="${HOME}/Android/AK-OnePone-AnyKernel2"
-PATCH_DIR="${HOME}/Android/AK-OnePone-AnyKernel2/patch"
-MODULES_DIR="${HOME}/Android/AK-OnePone-AnyKernel2/modules"
+REPACK_DIR="${HOME}/Android/z1"
+PATCH_DIR="${HOME}/Android/z1/patch"
+MODULES_DIR="${HOME}/Android/z1/modules"
 ZIP_MOVE="${HOME}/Android/releases"
-ZIMAGE_DIR="${HOME}/Android/AK-OnePone-AnyKernel2"
+ZIMAGE_DIR="${HOME}/Radioactive-kernel-HAM/arch/arm/boot"
 # Functions
 function clean_all {
 		rm -rf $MODULES_DIR/*
