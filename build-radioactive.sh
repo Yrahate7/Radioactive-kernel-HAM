@@ -33,7 +33,7 @@ REPACK_DIR="${HOME}/Android/z1"
 PATCH_DIR="${HOME}/Android/z1/patch"
 MODULES_DIR="${HOME}/Android/z1/modules"
 ZIP_MOVE="${HOME}/Android/releases"
-ZIMAGE_DIR="${HOME}/Radioactive-kernel-HAM/arch/arm/boot"
+ZIMAGE_DIR="${HOME}/Android/Radioactive-kernel-HAM/arch/arm/boot"
 # Functions
 function clean_all {
 		rm -rf $MODULES_DIR/*
