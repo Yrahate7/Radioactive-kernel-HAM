@@ -2877,7 +2877,7 @@ static int bq27531_config_charging_current(struct bq27x00_device_info *di, int l
 
 	switch(di->chrg_type) {
         case POWER_SUPPLY_TYPE_USB_CDP:
-		bq27531_op_set_input_limit(di, IINLIM_1500);
+		bq27531_op_set_input_limit(di, IINLIM_3000);
 		break;
         case POWER_SUPPLY_TYPE_USB_ACA:
         case POWER_SUPPLY_TYPE_USB_DCP:
