@@ -42,8 +42,8 @@ static ssize_t fpc1020_show_attr_setup(struct device *dev, struct device_attribu
 static int __devinit fpc1020_create_device(fpc1020_data_t *fpc1020);
 
 #define FNGR_DETECT     KEY_FNGR_DETECT
-#define FPC1020_RESET_RETRIES			2
-#define FPC1020_RESET_LOW_US			1000
+#define FPC1020_RESET_RETRIES			3
+#define FPC1020_RESET_LOW_US			400
 #define FPC1020_RESET_HIGH1_US			100
 #define FPC1020_RESET_HIGH2_US			1250
 #define DEVFS_SETUP_MODE (S_IWUSR|S_IWGRP|S_IRUSR|S_IRGRP|S_IROTH)
