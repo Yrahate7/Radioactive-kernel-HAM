@@ -44,7 +44,7 @@ extern const bool target_little_endian;
 /* set '0' for dynamic assignment, or '> 0' for static assignment */
 #define FPC1020_MAJOR				0
 
-#define FPC1020_SPI_CLOCK_SPEED			(5 * 1000000U)
+#define FPC1020_SPI_CLOCK_SPEED			(8 * 1000000U)
 
 #define FPC1020_BUFFER_MAX_IMAGES		3
 #define FPC1020_MAX_ADC_SETTINGS        (FPC1020_BUFFER_MAX_IMAGES + 1)
@@ -68,7 +68,7 @@ extern const bool target_little_endian;
 		FPC_1020_STATUS_REG_BIT_PWR_DWN_OSC_HIN)
 
 #define FPC1020_SLEEP_RETRIES			5
-#define FPC1020_SLEEP_RETRY_TIME_US		1000
+#define FPC1020_SLEEP_RETRY_TIME_US		800
 
 #define FPC1020_RESET_RETRIES			2
 #define FPC1020_RESET_LOW_US			1000
