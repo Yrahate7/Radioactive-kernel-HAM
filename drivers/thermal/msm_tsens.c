@@ -77,7 +77,6 @@ enum tsens_trip_type {
 #define TSENS_LOWER_INT_MASK (1 << 1)
 #define TSENS_UPPER_INT_MASK (1 << 2)
 #define TSENS_TRDY_MASK (1 << 7)
-#define TSENS_UPPER_LOWER_INT
 
 struct tsens_tm_device_sensor {
 	struct thermal_zone_device	*tz_dev;
@@ -664,3 +663,4 @@ MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("MSM Temperature Sensor driver");
 MODULE_VERSION("1.0");
 MODULE_ALIAS("platform:tsens-tm");
+
