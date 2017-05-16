@@ -2092,7 +2092,7 @@ static int bq27531_charge_ic_reset(void)
         if(ret)
                 pr_err("%s: set charging CE failed %d\n", __func__, ret);
 
-	ret = bq27531_op_set_input_limit(bqdi, IINLIM_3000);
+	ret = bq27531_op_set_input_limit(bqdi, IINLIM_500);
         if(ret)
                 pr_err("%s: set charging input power limit failed %d\n", __func__, ret);
 
