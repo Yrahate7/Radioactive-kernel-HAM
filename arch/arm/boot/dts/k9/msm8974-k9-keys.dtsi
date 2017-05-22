@@ -56,6 +56,7 @@
 			fpc,gpio_irq  = <74>;
 			fpc,gpio_reset = <33>;
 			fpc,gpio_cs  = <25>;
+			fpc,enable-wakeup;
 			vdd_ana-supply = <&spi_eth_vreg>;
 			vdd_io-supply = <&spi_eth_vreg>;
 		};
