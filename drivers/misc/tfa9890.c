@@ -40,7 +40,7 @@
 #define DRIVER_NAME "tfa9890"
 #define MAX_BUFFER_SIZE 512	
 #define GPIO_SLEEP_LOW_US 10
-#define RESET_DELAY 500
+#define RESET_DELAY 200
 
 struct tfa9890_dev	{
 	wait_queue_head_t	read_wq;

@@ -13,7 +13,7 @@
 /dts-v1/;
 
 /include/ "msm8974pro-ac-pm8941.dtsi"
-/include/ "k9/msm8974-k9.dtsi"
+/include/ "msm8974-k9.dtsi"
 
 / {
 	model = "Qualcomm MSM 8974Pro-AC ShenQi K9";

@@ -3007,6 +3007,7 @@ static int __init bq27x00_battery_init(void)
 	ret = blocking_notifier_chain_register(&qpnp_kpdpwr_bark_list, &fg_kpdpwr_bark_notifier);
 	if (ret)
 		pr_err("Unable to register qpnp kpdpwr bark notifier: %d\n", ret);
+
 #endif
 	return ret;
 }
