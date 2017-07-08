@@ -2552,7 +2552,7 @@ static int bq27x00_battery_probe(struct i2c_client *client,
 	di->bat.name = "battery";
 	di->bus.read = &bq27x00_read_i2c;
   	di->board = platform_data;
-  	di->board->chg_current = CURRENT_UNDEFINE;
+  	di->board->chg_current = CURRENT_HIGH;
 
 	di->is_suspend = 0;
 	di->is_rom_mode = 0;
@@ -2848,7 +2848,7 @@ static int bq27531_op_write_reg(struct bq27x00_device_info *di, u8 addr, u8 valu
 static int bq27531_op_set_input_limit(struct bq27x00_device_info *di, int value)
 {
 	printk("%s: %d\n", __func__, value);
-	return bq27531_op_write_reg(di, BQ24192_REG_CTL_0, value, 0xf8);
+	return bq27531_op_write_reg(di, BQ24192_REG_CTL_0, value, 0x12C);
 }
 
 /* CHG_/CE */
@@ -2892,7 +2892,7 @@ static int bq27531_config_charging_current(struct bq27x00_device_info *di, int l
 		}
 		break;
         case POWER_SUPPLY_TYPE_USB:
-		bq27531_op_set_input_limit(di, IINLIM_3000);
+		bq27531_op_set_input_limit(di, IINLIM_900);
 		break;
         case POWER_SUPPLY_TYPE_BATTERY:
 		break;

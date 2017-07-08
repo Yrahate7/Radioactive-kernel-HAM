@@ -64,11 +64,11 @@
 #endif
 
 #define MDSS_BRIGHT_TO_BL_DIMMER(out, v) do {\
-				out = (((v) - 2) * 255 / 250);\
+				out = (12*v*v+1393*v+3060)/4465;\
 				} while (0)
 
 bool backlight_dimmer;
-module_param(backlight_dimmer, bool, 0664);
+module_param(backlight_dimmer, bool, 0755);
 
 #define MAX_FBI_LIST 32
 static struct fb_info *fbi_list[MAX_FBI_LIST];
@@ -244,9 +244,6 @@ static void mdss_fb_set_bl_brightness(struct led_classdev *led_cdev,
 		value = mfd->panel_info->brightness_max;
 
 	if (backlight_dimmer) {
-		if (value < 3)
-			bl_lvl = 1;
-		else
 			MDSS_BRIGHT_TO_BL_DIMMER(bl_lvl, value);
 	} else {
 		/* This maps android backlight level 0 to 255 into
