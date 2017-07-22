@@ -826,7 +826,7 @@ static int __devinit bq28400_register_psy(struct bq28400_device *bq28400_dev)
  */
 static void bq28400_periodic_user_space_update_worker(struct work_struct *work)
 {
-	u32 delay_msec = 300;
+	u32 delay_msec = 10*1000;
 
 	pr_debug("Notify user space.\n");
 

@@ -20,7 +20,6 @@
 			label = "acc";
 			interrupt-parent = <&msmgpio>;
 			interrupts = <79>;
-			pinctrl-0 = <&bma2x2_int1_default &bma2x2_int2_default>;
 			vdd-supply = <&pm8941_l18>;
 			vcc_i2c-supply = <&pm8941_lvs1>;
 			bma2x2,drdy-gpio = <&msmgpio 79 0x00>;
