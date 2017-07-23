@@ -68,26 +68,3 @@ obj-$(CONFIG_SENSORS_MMA8X5X)	  	+= mma8x5x.o
 obj-$(CONFIG_SENSORS_STK3X1X)		+= stk3x1x.o
 obj-$(CONFIG_SENSORS_CAPELLA_CM36283)	+= cm36283.o
 obj-$(CONFIG_MACH_SHENQI_K9)		+= shenqi_hall_switch.o
-obj-$(CONFIG_SENSORS_BMA2X2)	+= bstclass.o
-
-obj-$(CONFIG_SENSORS_BMA2X2)	+= bma2x2.o
-
-ifeq ($(CONFIG_SENSORS_BMA2X2_ENABLE_INT1),y)
-	EXTRA_CFLAGS += -DBMA2X2_ENABLE_INT1
-endif
-
-ifeq ($(CONFIG_BOSCH_BMA2X2_ENABLE_INT2),y)
-	EXTRA_CFLAGS += -DBMA2X2_ENABLE_INT2
-endif
-#
-# Makefile for Bosch sensor driver.
-#
-obj-$(CONFIG_SENSORS_BMG)    += bmg160_driver.o bmg160.o
-ifeq ($(CONFIG_SENSORS_BMG_FIFO),y)
-	EXTRA_CFLAGS += -DBMG_USE_FIFO -DBMG_USE_BASIC_I2C_FUNC
-endif
-#
-# Makefile for Bosch sensor driver.
-#
-obj-$(CONFIG_SENSORS_BMM050)    += bmm050_driver.o bmm050.o
-EXTRA_CFLAGS += -DBMM_USE_BASIC_I2C_FUNC -DCONFIG_BMM_USE_PLATFORM_DATA
