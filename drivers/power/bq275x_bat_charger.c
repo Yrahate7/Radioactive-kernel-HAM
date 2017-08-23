@@ -71,7 +71,7 @@
 #define BQ27x00_REG_FLAGS		0x0A /*FLAGS*/
 #define BQ27500_FLAG_DSC		BIT(0)/*Discharging detected*/
 #define BQ27500_FLAG_SOC1		BIT(2)/*Soc threshold 1*/
-#define BQ27500_FLAG_BAT_DET	BIT(3)/*bat_detected*/
+#define BQ27500_FLAG_BAT_DET		BIT(3)/*bat_detected*/
 #define BQ27500_FLAG_CHG_EN		BIT(8)/*enable charge*/
 #define BQ27500_FLAG_FC			BIT(9)/*Full-charged condition reached*/
 #define BQ27500_FLAG_CNTL_EN		BIT(10)/*Full-charged condition reached*/
@@ -111,7 +111,7 @@
 #define BQ24192_REG_POR_1		0x76 /*Charger Control REG 1*/
 
 #define BQ24192_REG_CURRENT		0x77 /*Charge current */
-#define BQ24192_CC_5			BIT(7) /*2048mA */
+#define BQ24192_CC_5			BIT(7) /*3072mA */
 #define BQ24192_CC_4			BIT(6) /*1024mA */
 #define BQ24192_CC_3			BIT(5) /*512mA */
 #define BQ24192_CC_2			BIT(4) /*256mA */
@@ -934,7 +934,7 @@ static void usb_switch_to_uart(struct bq27x00_device_info *di, bool enable)
     
 }
 
-static void bq27530_set_current(struct bq27x00_device_info *di, enum current_level cl)
+static void bq27530_set_current(struct bq27x00_device_info *di, enum IINLIM_level cl)
 {
 
     int val = !cl;

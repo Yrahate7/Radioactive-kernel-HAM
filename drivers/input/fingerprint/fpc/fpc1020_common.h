@@ -44,12 +44,12 @@ extern const bool target_little_endian;
 /* set '0' for dynamic assignment, or '> 0' for static assignment */
 #define FPC1020_MAJOR				0
 
-#define FPC1020_SPI_CLOCK_SPEED			(8 * 1000000U)
+#define FPC1020_SPI_CLOCK_SPEED			(5 * 1000000U)
 
 #define FPC1020_BUFFER_MAX_IMAGES		3
 #define FPC1020_MAX_ADC_SETTINGS        (FPC1020_BUFFER_MAX_IMAGES + 1)
 
-#define FPC1020_DEFAULT_IRQ_TIMEOUT_MS		(25 * HZ / 1000)
+#define FPC1020_DEFAULT_IRQ_TIMEOUT_MS		(200 * HZ / 1000)
 
 #define FPC1020_STATUS_REG_RESET_VALUE 0x1e
 
@@ -75,7 +75,7 @@ extern const bool target_little_endian;
 #define FPC1020_RESET_HIGH1_US			100
 #define FPC1020_RESET_HIGH2_US			1250
 
-#define FPC1020_CAPTURE_WAIT_FINGER_DELAY_MS 	1
+#define FPC1020_CAPTURE_WAIT_FINGER_DELAY_MS 	25
 
 #define FPC1020_WAKEUP_DETECT_ZONE_COUNT	2
 #define FPC1020_WAKEUP_DETECT_ROWS		8
