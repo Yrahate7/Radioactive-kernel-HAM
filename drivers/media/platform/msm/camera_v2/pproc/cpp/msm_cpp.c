@@ -54,7 +54,7 @@
 #define MSM_MICRO_IFACE_CLK_IDX 7
 
 #define MSM_CPP_NOMINAL_CLOCK 266670000
-#define MSM_CPP_TURBO_CLOCK 320000000
+#define MSM_CPP_TURBO_CLOCK 465000000
 
 #define CPP_FW_VERSION_1_2_0	0x10020000
 #define CPP_FW_VERSION_1_4_0	0x10040000
@@ -141,10 +141,10 @@ static void msm_enqueue(struct msm_device_queue *queue,
 
 static struct msm_cam_clk_info cpp_clk_info[] = {
 	{"camss_top_ahb_clk", -1},
-	{"vfe_clk_src", 266670000},
+	{"vfe_clk_src", 465000000},
 	{"camss_vfe_vfe_clk", -1},
 	{"iface_clk", -1},
-	{"cpp_core_clk", 266670000},
+	{"cpp_core_clk", 465000000},
 	{"cpp_iface_clk", -1},
 	{"cpp_bus_clk", -1},
 	{"micro_iface_clk", -1},

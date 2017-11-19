@@ -751,7 +751,6 @@ int mdss_dsi_cmd_reg_tx(u32 data,
 	MIPI_OUTP(ctrl_base + 0x090, 0x01);	/* trigger */
 	wmb();
 
-	udelay(300);
 
 	return 4;
 }
@@ -1413,7 +1412,6 @@ void mdss_dsi_debug_check_te(struct mdss_panel_data *pdata)
 		 * up in suspend/wakeup sequence multiple times if usleep is
 		 * used, which is an overhead. So use udelay instead of usleep.
 		 */
-		udelay(80);
 	}
 	pr_info(" ============ finish waiting for TE ============\n");
 }

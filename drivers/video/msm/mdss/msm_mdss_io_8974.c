@@ -598,11 +598,11 @@ void mdss_dsi_phy_sw_reset(unsigned char *ctrl_base)
 {
 	/* start phy sw reset */
 	MIPI_OUTP(ctrl_base + 0x12c, 0x0001);
-	udelay(1000);
+
 	wmb();
 	/* end phy sw reset */
 	MIPI_OUTP(ctrl_base + 0x12c, 0x0000);
-	udelay(100);
+
 	wmb();
 }
 

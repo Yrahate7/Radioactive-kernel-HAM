@@ -45,7 +45,7 @@
 
 static struct msm_cam_clk_info msm_vfe32_1_clk_info[] = {
 	/*vfe32 clock info for B-family: 8610 */
-	{"vfe_clk_src", 266670000},
+	{"vfe_clk_src", 465000000},
 	{"vfe_clk", -1},
 	{"vfe_ahb_clk", -1},
 	{"csi_vfe_clk", -1},
@@ -54,7 +54,7 @@ static struct msm_cam_clk_info msm_vfe32_1_clk_info[] = {
 
 static struct msm_cam_clk_info msm_vfe32_2_clk_info[] = {
 	/*vfe32 clock info for A-family: 8960 */
-	{"vfe_clk", 266667000},
+	{"vfe_clk", 465000000},
 	{"vfe_pclk", -1},
 	{"csi_vfe_clk", -1},
 };

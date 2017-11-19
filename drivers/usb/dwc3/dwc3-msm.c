@@ -3514,7 +3514,7 @@ static int dwc3_msm_runtime_idle(struct device *dev)
 		 * counter.  We enter low power mode when
 		 * PM usage counter is decremented.
 		 */
-		pm_schedule_suspend(dev, 3000);
+		pm_schedule_suspend(dev, 10000);
 		return -EAGAIN;
 	}
 

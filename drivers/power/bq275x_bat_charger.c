@@ -52,7 +52,9 @@
 #include <linux/fb.h>
 #endif
 #include <linux/qpnp/power-on.h>
-
+#ifdef CONFIG_FORCE_FAST_CHARGE
+#include <linux/fastchg.h>
+#endif
 #ifdef DEBUG
 #define DBG(fmt...) printk(KERN_DEBUG fmt)
 #else
@@ -71,7 +73,7 @@
 #define BQ27x00_REG_FLAGS		0x0A /*FLAGS*/
 #define BQ27500_FLAG_DSC		BIT(0)/*Discharging detected*/
 #define BQ27500_FLAG_SOC1		BIT(2)/*Soc threshold 1*/
-#define BQ27500_FLAG_BAT_DET		BIT(3)/*bat_detected*/
+#define BQ27500_FLAG_BAT_DET	        BIT(3)/*bat_detected*/
 #define BQ27500_FLAG_CHG_EN		BIT(8)/*enable charge*/
 #define BQ27500_FLAG_FC			BIT(9)/*Full-charged condition reached*/
 #define BQ27500_FLAG_CNTL_EN		BIT(10)/*Full-charged condition reached*/
@@ -111,7 +113,7 @@
 #define BQ24192_REG_POR_1		0x76 /*Charger Control REG 1*/
 
 #define BQ24192_REG_CURRENT		0x77 /*Charge current */
-#define BQ24192_CC_5			BIT(7) /*3072mA */
+#define BQ24192_CC_5			BIT(7) /*2048mA */
 #define BQ24192_CC_4			BIT(6) /*1024mA */
 #define BQ24192_CC_3			BIT(5) /*512mA */
 #define BQ24192_CC_2			BIT(4) /*256mA */
@@ -196,8 +198,8 @@
 #define BATT_VENDOR_LG			1
 #define BATT_VENDOR_ATL_AND_DUMY	2
 
-#define BATT_FW_VER_LG		0xAC02
-#define BATT_FW_VER_ATL		0xAD02
+#define BATT_FW_VER_LG		0xAA09
+#define BATT_FW_VER_ATL		0xAB03
 
 extern long qpnp_batt_id;
 int soc_prev = 0;
@@ -315,6 +317,7 @@ static enum power_supply_property bq27x00_battery_props[] = {
 	POWER_SUPPLY_PROP_STATUS,
 	POWER_SUPPLY_PROP_PRESENT,
 	POWER_SUPPLY_PROP_CHARGING_ENABLED,
+	POWER_SUPPLY_PROP_CHARGE_TYPE,
 	POWER_SUPPLY_PROP_VOLTAGE_NOW,
 	POWER_SUPPLY_PROP_CURRENT_NOW,
 	POWER_SUPPLY_PROP_CAPACITY,
@@ -322,6 +325,15 @@ static enum power_supply_property bq27x00_battery_props[] = {
 	POWER_SUPPLY_PROP_HEALTH,
 	POWER_SUPPLY_PROP_TECHNOLOGY,
 	POWER_SUPPLY_PROP_CYCLE_COUNT,
+	POWER_SUPPLY_PROP_SYSTEM_TEMP_LEVEL,
+	POWER_SUPPLY_PROP_INPUT_CURRENT_MAX,
+	POWER_SUPPLY_PROP_INPUT_CURRENT_TRIM,
+	POWER_SUPPLY_PROP_INPUT_CURRENT_SETTLED,
+	POWER_SUPPLY_PROP_VCHG_LOOP_DBC_BYPASS,
+	POWER_SUPPLY_PROP_VOLTAGE_MIN,
+	POWER_SUPPLY_PROP_COOL_TEMP,
+	POWER_SUPPLY_PROP_WARM_TEMP,
+
 };
 static enum power_supply_property bq24912_mains_props[] = {
 	POWER_SUPPLY_PROP_ONLINE,
@@ -530,7 +542,7 @@ int calculate_report_soc(struct bq27x00_device_info *di)
 			}
 		}
 
-		if(di->cache.voltage <= 3400){
+		if(di->cache.voltage <= 3100){
 			if(low_vol_start_time > 0){
 				low_vol_delta_time = now_tm_sec - low_vol_start_time;
 				dev_info(di->dev,"low_vol_delta_time=%d,low_vol_start_time=%ld.\n",low_vol_delta_time,low_vol_start_time);
@@ -560,7 +572,7 @@ int calculate_report_soc(struct bq27x00_device_info *di)
 			if(di->cache.capacity == 0){
 				if(g_call_status){
 					di->cache.capacity = 1;
-				} else if(di->cache.voltage <= 3400 || (di->cache.flags&0x2) == 0x2){
+				} else if(di->cache.voltage <= 3100 || (di->cache.flags&0x2) == 0x2){
 					di->cache.capacity = 0;
 					dev_info(di->dev,"report cap=0.\n");
 				} else {
@@ -584,7 +596,7 @@ int calculate_report_soc(struct bq27x00_device_info *di)
 	last_report_soc = di->cache.capacity;
 
  	/* "Liulf8 begin" Reset soc when truesoc is different between soc.Not allow twice reset in 6 hours*/
-	/*d_soc > 10 means soc is abnormal.d_soc = |true_soc - soc|*/
+	/*d_soc > 3 means soc is abnormal.d_soc = |true_soc - soc|*/
 	rsoc = bq27x00_read(di, BQ27500_REG_SOC, false);
 	tsoc = bq27x00_read(di, BQ27500_REG_TRUESOC, false);
 
@@ -844,6 +856,8 @@ static int bq27x00_battery_read_temp(struct bq27x00_device_info *di)
 			temp = temp_prev;
 		}else{
 			dev_info(di->dev,"High temp detect:%dC %d times,report it!\n",temp,htemp_cnt);
+			if(di->battery_vendor_index == BATT_VENDOR_ATL_AND_DUMY)
+				temp = temp + 20;
 			temp_prev = temp;
 			htemp_cnt = 0;
 		}
@@ -852,9 +866,81 @@ static int bq27x00_battery_read_temp(struct bq27x00_device_info *di)
 	return temp;
 }
 
+static int bound_soc(int soc)
+{
+	soc = max(0, soc);
+	soc = min(100, soc);
+
+	return soc;
+}
+
+static int soc_remap(int soc,bool is_charging)
+{
+	int mapped_soc = 0;
+	if(soc >= 87)
+	{
+		mapped_soc = bound_soc(soc+2);
+		if(soc < 98)
+			return mapped_soc;
+		if(is_charging && soc != 100)
+			return 99;
+		else
+			return mapped_soc;
+	}
+	if(soc < 87 && soc >= 80)
+	{
+		return bound_soc(soc+1);
+	}
+	if(soc < 80 && soc >= 74)
+	{
+		return bound_soc(soc);
+	}
+#if 0
+	if(soc < 74 && soc >= 60)
+	{
+		return bound_soc(soc - 1);
+	}
+	if(soc < 60 && soc >= 36)
+	{
+		return bound_soc(soc - 2);
+	}
+	if(soc < 36 && soc >= 28)
+	{
+		return bound_soc(soc - 1);
+	}
+#else
+	if(soc < 74 && soc >= 28)
+	{
+		return bound_soc(soc);
+	}
+#endif
+	if(soc < 28 && soc >= 23)
+	{
+		return bound_soc(soc);
+	}
+	if(soc < 23 && soc >= 20)
+	{
+		return bound_soc(soc - 1);
+	}
+	if(soc < 20 && soc >= 4)
+	{
+		return bound_soc(soc - 2);
+	}
+	if(soc < 4 && soc >= 2)
+	{
+		return bound_soc(soc - 1);
+	}
+	if(soc < 2 && soc >= 0)
+	{
+		return bound_soc(soc);
+	}
+	return bound_soc(soc);
+}
+
+static int open_soc_remap = 1;
 static int bq27x00_battery_read_rsoc(struct bq27x00_device_info *di)
 {
-	int rsoc = -1;
+	int rsoc = -1, rsoc2 = -1;
 	int volt = -1;
 	int chrg_status,chrg_term_tim,chrg_term_curr;
 
@@ -862,6 +948,13 @@ static int bq27x00_battery_read_rsoc(struct bq27x00_device_info *di)
 	rsoc = bq27x00_read(di, BQ27500_REG_SOC, false);
 	if (rsoc < 0 || volt < 0 )
 			dev_err(di->dev, "error reading soc %d or volt %d\n",rsoc,volt);
+	else if(open_soc_remap == 1)
+		rsoc2 = soc_remap(rsoc,(di->chg_state == POWER_SUPPLY_STATUS_CHARGING || di->chg_state == POWER_SUPPLY_STATUS_FULL));
+
+	if ((di->chg_state == POWER_SUPPLY_STATUS_CHARGING || di->chg_state == POWER_SUPPLY_STATUS_FULL) && (rsoc2 > rsoc))
+		rsoc = rsoc2;
+	else if ((di->chg_state != POWER_SUPPLY_STATUS_CHARGING && di->chg_state != POWER_SUPPLY_STATUS_FULL) && (rsoc2 < rsoc))
+		rsoc = rsoc2;
 
 	//for calculate soc
 	if(rsoc >= 0 && rsoc <= 100){
@@ -934,7 +1027,7 @@ static void usb_switch_to_uart(struct bq27x00_device_info *di, bool enable)
     
 }
 
-static void bq27530_set_current(struct bq27x00_device_info *di, enum IINLIM_level cl)
+static void bq27530_set_current(struct bq27x00_device_info *di, enum current_level cl)
 {
 
     int val = !cl;
@@ -1547,6 +1640,9 @@ static int bq27x00_battery_get_property(struct power_supply *psy,
 		case POWER_SUPPLY_PROP_CHARGING_ENABLED:
 				val->intval = di->board->chg_en_flag;
 				break;
+		case POWER_SUPPLY_PROP_CHARGE_TYPE:
+		val->intval = POWER_SUPPLY_CHARGE_TYPE_FAST;
+		break;
 		case POWER_SUPPLY_PROP_PRESENT:
 			ret = bq27x00_read(di, BQ27x00_REG_FLAGS, false);
 			val->intval = (ret & BQ27500_FLAG_BAT_DET)>0 ? 1:0;
@@ -1591,6 +1687,30 @@ static int bq27x00_battery_get_property(struct power_supply *psy,
 		case POWER_SUPPLY_PROP_CYCLE_COUNT:
 			ret = bq27x00_simple_value(di->cache.cycle_count, val);
 			break;
+		case POWER_SUPPLY_PROP_COOL_TEMP:
+		val->intval = 100;
+			break;
+		case POWER_SUPPLY_PROP_WARM_TEMP:
+		val->intval = 450;
+			break;
+		case POWER_SUPPLY_PROP_SYSTEM_TEMP_LEVEL:
+		ret = bq27x00_battery_temperature(di, val);
+			break;
+		case POWER_SUPPLY_PROP_INPUT_CURRENT_MAX:
+		val->intval = 100000;
+		break;
+	case POWER_SUPPLY_PROP_INPUT_CURRENT_TRIM:
+		val->intval = 34;
+		break;
+	case POWER_SUPPLY_PROP_INPUT_CURRENT_SETTLED:
+	        val->intval = 1;
+		break;
+	case POWER_SUPPLY_PROP_VOLTAGE_MIN:
+		val->intval = 3000000;
+		break;
+	case POWER_SUPPLY_PROP_VCHG_LOOP_DBC_BYPASS:
+		val->intval = 0;
+		break;
 		default:
 			return -EINVAL;
 	}
@@ -2092,7 +2212,7 @@ static int bq27531_charge_ic_reset(void)
         if(ret)
                 pr_err("%s: set charging CE failed %d\n", __func__, ret);
 
-	ret = bq27531_op_set_input_limit(bqdi, IINLIM_2000);
+	ret = bq27531_op_set_input_limit(bqdi, IINLIM_3000);
         if(ret)
                 pr_err("%s: set charging input power limit failed %d\n", __func__, ret);
 
@@ -2877,22 +2997,44 @@ static int bq27531_config_charging_current(struct bq27x00_device_info *di, int l
 
 	switch(di->chrg_type) {
         case POWER_SUPPLY_TYPE_USB_CDP:
-		bq27531_op_set_input_limit(di, IINLIM_3000);
+		bq27531_op_set_input_limit(di, IINLIM_1200);
 		break;
         case POWER_SUPPLY_TYPE_USB_ACA:
         case POWER_SUPPLY_TYPE_USB_DCP:
         case POWER_SUPPLY_TYPE_UNKNOWN:
+		#ifdef CONFIG_FORCE_FAST_CHARGE
+		if (force_fast_charge)
 		if((level && !g_call_status) || (!boot_done))
 			bq27531_op_set_input_limit(di, IINLIM_3000);
 		else {
 			if (g_call_status)
-				bq27531_op_set_input_limit(di, IINLIM_900);
+				bq27531_op_set_input_limit(di, IINLIM_3000);
 			else
 				bq27531_op_set_input_limit(di, IINLIM_3000);
+		break;
+		}
+		else
+		if((level && !g_call_status) || (!boot_done))
+			bq27531_op_set_input_limit(di, IINLIM_900);
+		else {
+			if (g_call_status)
+				bq27531_op_set_input_limit(di, IINLIM_900);
+			else
+				bq27531_op_set_input_limit(di, IINLIM_900);
+		}
+		break;
+		#endif
+		if((level && !g_call_status) || (!boot_done))
+			bq27531_op_set_input_limit(di, IINLIM_900);
+		else {
+			if (g_call_status)
+				bq27531_op_set_input_limit(di, IINLIM_900);
+			else
+				bq27531_op_set_input_limit(di, IINLIM_900);
 		}
 		break;
         case POWER_SUPPLY_TYPE_USB:
-		bq27531_op_set_input_limit(di, IINLIM_1200);
+		bq27531_op_set_input_limit(di, IINLIM_500);
 		break;
         case POWER_SUPPLY_TYPE_BATTERY:
 		break;

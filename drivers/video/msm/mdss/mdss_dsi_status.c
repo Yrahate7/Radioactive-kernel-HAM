@@ -30,8 +30,8 @@
 #include "mdss_panel.h"
 #include "mdss_mdp.h"
 
-#define STATUS_CHECK_INTERVAL_MS 5000
-#define STATUS_CHECK_INTERVAL_MIN_MS 200
+#define STATUS_CHECK_INTERVAL_MS 2000
+#define STATUS_CHECK_INTERVAL_MIN_MS 10
 #define DSI_STATUS_CHECK_DISABLE 0
 
 static uint32_t interval = STATUS_CHECK_INTERVAL_MS;

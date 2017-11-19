@@ -369,11 +369,11 @@ void msm_dsi_phy_sw_reset(unsigned char *ctrl_base)
 {
 	/* start phy sw reset */
 	MIPI_OUTP(ctrl_base + DSI_PHY_SW_RESET, 0x0001);
-	udelay(1000); /*per DSI controller spec*/
+	 /*per DSI controller spec*/
 	wmb();
 	/* end phy sw reset */
 	MIPI_OUTP(ctrl_base + DSI_PHY_SW_RESET, 0x0000);
-	udelay(100); /*per DSI controller spec*/
+	 /*per DSI controller spec*/
 	wmb();
 }
 

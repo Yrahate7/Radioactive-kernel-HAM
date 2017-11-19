@@ -42,10 +42,10 @@ static ssize_t fpc1020_show_attr_setup(struct device *dev, struct device_attribu
 static int __devinit fpc1020_create_device(fpc1020_data_t *fpc1020);
 
 #define FNGR_DETECT     KEY_FNGR_DETECT
-#define FPC1020_RESET_RETRIES			5
-#define FPC1020_RESET_LOW_US			300
+#define FPC1020_RESET_RETRIES			3
+#define FPC1020_RESET_LOW_US			1000
 #define FPC1020_RESET_HIGH1_US			100
-#define FPC1020_RESET_HIGH2_US			1000
+#define FPC1020_RESET_HIGH2_US			1250
 #define DEVFS_SETUP_MODE (S_IWUSR|S_IWGRP|S_IRUSR|S_IRGRP|S_IROTH)
 
 #define FPC1020_ATTR(__grp, __field, __mode)				\
@@ -93,7 +93,7 @@ int fpc1020_hw_reset(fpc1020_data_t *fpc1020)
     dev_warn(&fpc1020->spi->dev, "%s\n", __func__);
     //hard reset FPC1150A
     fpc1020_gpio_reset(fpc1020);
-    mdelay(50);
+    mdelay(20);
     return 0;
 }
 static ssize_t fpc1020_show_attr_setup(struct device *dev,
@@ -545,7 +545,6 @@ void fpc1020_report_work_func(struct work_struct *work)
         dev_info(&fpc1020->spi->dev, "report to input device: %d\n", fpc1020->report_key);
         input_report_key(fpc1020->input_dev, fpc1020->report_key, 1);
         input_sync(fpc1020->input_dev);
-        mdelay(30);
         input_report_key(fpc1020->input_dev, fpc1020->report_key, 0);
         input_sync(fpc1020->input_dev);
         fpc1020->report_key = 0;

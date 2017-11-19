@@ -449,6 +449,11 @@
 			bq27530,chg-otg-gpio = <&pm8941_gpios 11 0x00>;
 			bq27530,chg-psel-gpio = <&pm8941_gpios 12 0x00>;
 			bq27530,usb-sw-en-gpio = <&pm8941_gpios 14 0x00>;
+			ti,temp-cold = <2>;
+			ti,temp-hot = <43>;
+			ti,fast-charge-current-limit-milliamp = <0x9c4>;
+			ti,pre-charge-current-limit-milliamp = <0x100>;
+			ti,charge-term-current-limit-milliamp = <0x190>;
 		};
 	};
 };
