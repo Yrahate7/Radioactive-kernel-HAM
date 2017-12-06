@@ -110,7 +110,11 @@
 #define BQ24192_0_FAL_2			BIT(2)/*Charger fault status bit*/
 #define BQ24192_0_FAL_1			BIT(1)
 #define BQ24192_0_FAL_0			BIT(0)
+
 #define BQ24192_REG_POR_1		0x76 /*Charger Control REG 1*/
+
+
+
 
 #define BQ24192_REG_CURRENT		0x77 /*Charge current */
 #define BQ24192_CC_5			BIT(7) /*2048mA */
@@ -186,7 +190,7 @@
 
 #define BATT_TEMP_MAX			600
 #define BATT_VOLT_MAX			4425
-#define BATT_VOLT_MIN			3000
+#define BATT_VOLT_MIN			3100
 
 #define BQ_I2C_VTG_MIN_UV	1800000
 #define BQ_I2C_VTG_MAX_UV	1800000
@@ -452,6 +456,7 @@ static int last_cache_soc = 0;
 static int delta_soc = 0;
 static int batt_status = 0;//0:discharging,1:charing
 static unsigned long reset_time = 0;	/*The time when reset*/
+static unsigned long count_time = 0;	/*Time waitting for low current*/
 
 int calculate_report_soc(struct bq27x00_device_info *di)
 {
@@ -515,6 +520,9 @@ int calculate_report_soc(struct bq27x00_device_info *di)
 						__func__,delta_soc,delta_time,di->cache.capacity,last_report_soc);
 				}
 			}
+			//if(di->cache.capacity >= 100 && last_report_soc != 100 && current_now > 400 && delta_time < 720){
+			//	di->cache.capacity = 99;
+			//}
 			/*printk("%s:cache_cap=%d,report_soc=%d,del_time=%d.\n",__func__,di->cache.capacity,last_report_soc,delta_time);*/
 		}
 	}else{
@@ -610,33 +618,40 @@ int calculate_report_soc(struct bq27x00_device_info *di)
 	else 
 		current_reset = current_now;
 
-	if((d_soc > 10) && di->reset_p)
-		printk("%s: vol = soc=%d,tsoc=%d.\n", __func__, rsoc, tsoc);
+	if(d_soc > 3){
+		if(di->reset_p){
+			if((now_tm_sec - reset_time) > 43200){
+				di->reset_p = 0;
+			}else{
+				printk("reset protect soc=%d,tsoc=%d.\n", rsoc, tsoc);
+				return 0;
+			}
+		}
+		if(count_time == 0)
+			count_time = now_tm_sec;	
 
-	if(di->reset_p)
-		if((now_tm_sec - reset_time) > 21600)
-			di->reset_p = 0;
-		
-	if ((di->cache.temperature-2731 >= 200) && (di->cache.temperature-2731 <= 400)&&(!di->reset_p) && (!di->soc_reset) && (di->fw_dw_done)) {
-		if((d_soc > 10)&&(d_soc < 15) && (current_reset < 500)) {
-			printk("%s: fg reset 10, %d,%d,%d,%d\n", __func__, di->cache.temperature-2731, current_now, rsoc, tsoc);
-				bq27531_soc_reset();
-				reset_time = now_tm_sec;
-				di->reset_p = 1;
-		}else if(d_soc > 15){
-			printk("%s: fg reset 15, %d,%d,%d,%d\n", __func__, di->cache.temperature-2731, current_now, rsoc, tsoc);
-				bq27531_soc_reset();
-				reset_time = now_tm_sec;
-				di->reset_p = 1;
-			
+		if((current_reset <= 800) && (di->cache.temperature-2731 >= 200) && (di->cache.temperature-2731 <= 400)){
+			bq27531_soc_reset();
+			reset_time = now_tm_sec;
+			di->reset_p = 1;
+			count_time = 0;
+			printk("%s: fg reset 1, %d,%d,%d,%d\n", __func__, di->cache.temperature-2731, current_now, rsoc, tsoc);
+		}else if((current_reset > 800)&&((now_tm_sec - count_time) >= 600)){
+			bq27531_soc_reset();
+			reset_time = now_tm_sec;
+			di->reset_p = 1;
+			count_time = 0;
+			printk("%s: fg reset 2, %d,%d,%d,%d\n", __func__, di->cache.temperature-2731, current_now, rsoc, tsoc);
+		}else if((d_soc >= 8) || ((now_tm_sec - count_time) >= 600)){
+			bq27531_soc_reset();
+			reset_time = now_tm_sec;
+			di->reset_p = 1;
+			count_time = 0;
+			printk("%s: fg reset 3, %d,%d,%d,%d\n", __func__, di->cache.temperature-2731, current_now, rsoc, tsoc);
 		}
-	}else if((d_soc > 20) && (!di->reset_p) && (!di->soc_reset) && (di->fw_dw_done)){
-			printk("%s: fg reset T, %d,%d,%d,%d\n", __func__, di->cache.temperature-2731, current_now, rsoc, tsoc);
-				bq27531_soc_reset();
-				reset_time = now_tm_sec;
-				di->reset_p = 1;
-		}
- 	/* "Liulf8 end" Reset soc when truesoc is different between soc.Not allow twice reset in 6 hours*/
+	}else if(count_time != 0)
+		count_time = 0;
+	/* "Liulf8 end" Reset soc when truesoc is different between soc.Not allow twice reset in 6 hours*/
 	
 	return 0;
 
@@ -1109,7 +1124,7 @@ static void bq27530_enable_charging(struct bq27x00_device_info *di, bool enable)
         /*gpio_set_value_cansleep(di->board->chg_en_gpio, val);*/
         di->board->chg_en_flag = enable_flag; 
         /*printk("%s HIZ mode.\n",enable_flag?"disable":"enable");*/
-        for(i=0;i<5;i++){
+        for(i=0;i<6;i++){
             ret = bq27x00_read_i2c(di, BQ24192_REG_CTL_0, 1);
             if(ret > 0)
                 break;
@@ -1124,7 +1139,7 @@ static void bq27530_enable_charging(struct bq27x00_device_info *di, bool enable)
                 data &= ~BQ24192_0_HIZ;
             else
                 data |= BQ24192_0_HIZ;
-            for(i=0;i<5;i++){
+            for(i=0;i<6;i++){
                 ret = bq27x00_write_i2c(di,BQ24192_REG_CTL_0,1,&data,0);
                 if(ret>0)
                     break;
@@ -2187,7 +2202,7 @@ static int bq27531_charge_ic_reset(void)
 		return -1;
 	}
 
-        for(i=0;i<5;i++){
+        for(i=0;i<6;i++){
             ret = bq27x00_read_i2c(bqdi, BQ24192_REG_CTL_0, 1);
             if(ret > 0)
                 break;
@@ -2198,7 +2213,7 @@ static int bq27531_charge_ic_reset(void)
         }else{
             data = ret & 0xff;
             data &= ~BQ24192_0_HIZ;
-            for(i=0;i<5;i++){
+            for(i=0;i<6;i++){
                 ret = bq27x00_write_i2c(bqdi,BQ24192_REG_CTL_0,1,&data,0);
                 if(ret>0)
                     break;
@@ -2230,7 +2245,7 @@ return 0;
 		return -1;
 	}
 
-        for(i=0;i<5;i++){
+        for(i=0;i<6;i++){
             ret = bq27x00_read_i2c(bqdi, BQ24192_REG_CTL_0, 1);
             if(ret > 0)
                 break;
@@ -2241,7 +2256,7 @@ return 0;
         }else{
             data = ret & 0xff;
             data &= ~BQ24192_0_HIZ;
-            for(i=0;i<5;i++){
+            for(i=0;i<6;i++){
                 ret = bq27x00_write_i2c(bqdi,BQ24192_REG_CTL_0,1,&data,0);
                 if(ret>0)
                     break;
@@ -2408,12 +2423,12 @@ ssize_t  fg_info_get(struct device *dev, struct device_attribute *attr,
     max_capa = bq27x00_read(bqdi, 0x62, false);
     ret = sprintf(buf, "%4X,%X,%d,%d,%d,%d,%d\n",
 			0xD006,
-			df_ver_get(bqdi),
-			gpio_get_value(bqdi->board->chg_psel_gpio),
-			bqdi->vbus_ovp,
-			bqdi->chrg_type,
-			bqdi->battery_vendor_index,
-			max_capa);
+			df_ver_get(bqdi),//aa09
+			gpio_get_value(bqdi->board->chg_psel_gpio),//1(notchg)0(chg)
+			bqdi->vbus_ovp,//0(notchg)0(chg)
+			bqdi->chrg_type,//1(notchg)6(usbchg)
+			bqdi->battery_vendor_index,//1
+			max_capa);//4143
 
     return ret;
 }
@@ -2992,17 +3007,23 @@ static int bq27531_config_charging_current(struct bq27x00_device_info *di, int l
 	printk("%s: chrg_type=%d, level=%d, vbus_ovp=%d, call=%d\n",
 		__func__, di->chrg_type, level, di->vbus_ovp, g_call_status);
 
-	if (di->vbus_ovp == 1)
+	int temp;
+	temp=bq27x00_battery_read_temp(di);
+	temp = temp - BQ_BATT_TEMP_OFFSET;
+	int bat_temp;
+	bat_temp = temp - 2731;
+	
+ 	if (di->vbus_ovp == 1)
 		return 0;
 
 	switch(di->chrg_type) {
         case POWER_SUPPLY_TYPE_USB_CDP:
-		bq27531_op_set_input_limit(di, IINLIM_1200);
+		bq27531_op_set_input_limit(di, IINLIM_1500);
 		break;
         case POWER_SUPPLY_TYPE_USB_ACA:
         case POWER_SUPPLY_TYPE_USB_DCP:
         case POWER_SUPPLY_TYPE_UNKNOWN:
-		#ifdef CONFIG_FORCE_FAST_CHARGE
+		#ifdef CONFIG_FORCE_FAST_CHARGE			
 		if (force_fast_charge)
 		if((level && !g_call_status) || (!boot_done))
 			bq27531_op_set_input_limit(di, IINLIM_3000);
@@ -3020,7 +3041,7 @@ static int bq27531_config_charging_current(struct bq27x00_device_info *di, int l
 			if (g_call_status)
 				bq27531_op_set_input_limit(di, IINLIM_900);
 			else
-				bq27531_op_set_input_limit(di, IINLIM_900);
+				bq27531_op_set_input_limit(di, IINLIM_1500);
 		}
 		break;
 		#endif
@@ -3030,7 +3051,7 @@ static int bq27531_config_charging_current(struct bq27x00_device_info *di, int l
 			if (g_call_status)
 				bq27531_op_set_input_limit(di, IINLIM_900);
 			else
-				bq27531_op_set_input_limit(di, IINLIM_900);
+				bq27531_op_set_input_limit(di, IINLIM_1500);
 		}
 		break;
         case POWER_SUPPLY_TYPE_USB:

@@ -46,7 +46,9 @@
 		};
 	};
 
-	
+	qcom,bcl {
+		compatible = "qcom,bcl";
+	};
 
 	/delete-node/ qcom,qseecom@7b00000;
 	qseecom: qcom,qseecom@6700000 {
@@ -217,3 +219,4 @@
 &spi_epm {
   status = "disabled";
 };
+
