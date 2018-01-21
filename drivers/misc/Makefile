@@ -56,7 +56,6 @@ obj-$(CONFIG_SENSORS_AK8975)	+= akm8975.o
 obj-$(CONFIG_TSIF) += msm_tsif.o
 msm_tsif-objs := tsif.o
 obj-$(CONFIG_TSIF_CHRDEV) += tsif_chrdev.o
-obj-$(CONFIG_NXP_TFA9890) += tfa9890.o
 obj-$(CONFIG_TSPP) += tspp.o
 obj-$(CONFIG_CI_BRIDGE_SPI) += ci-bridge-spi.o
 obj-$(CONFIG_HAPTIC_ISA1200)		+= isa1200.o
@@ -65,6 +64,7 @@ obj-$(CONFIG_PMIC8XXX_VIBRATOR) += pm8xxx-vibrator.o
 obj-$(CONFIG_MSM8974_PWM_VIBRATOR) += msm8974_pwm_vibrator.o
 obj-$(CONFIG_PMIC8XXX_NFC) += pm8xxx-nfc.o
 obj-$(CONFIG_PMIC8XXX_UPL) += pm8xxx-upl.o
+obj-$(CONFIG_NXP_TFA9890) += tfa9890.o
 obj-$(CONFIG_MSM_MEMORY_LOW_POWER_MODE_SUSPEND_DEEP_POWER_DOWN) \
 	+= msm_migrate_pages.o
 obj-$(CONFIG_PMIC8058_XOADC) += pmic8058-xoadc.o

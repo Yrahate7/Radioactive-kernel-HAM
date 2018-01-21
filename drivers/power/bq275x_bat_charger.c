@@ -64,7 +64,7 @@
 #define DRIVER_VERSION			"1.2.0"
 
 #define SUPPORT_QPNP_VBUS_OVP
-//#define BQ_WRITE_TEMP
+#define BQ_WRITE_TEMP
 
 #define BQ27530_REG_CNTL		0x00 /*control*/
 #define BQ27x00_REG_TEMP		0x06 /*Temperature*/
@@ -188,7 +188,7 @@
 #define BQ24292I_IC_VERSION			0x3
 #define BQ24192I_IC_VERSION			0x3
 
-#define BATT_TEMP_MAX			600
+#define BATT_TEMP_MAX			500
 #define BATT_VOLT_MAX			4425
 #define BATT_VOLT_MIN			3100
 
@@ -828,8 +828,8 @@ static void bq24192_set_chrg_type(struct bq27x00_device_info *di)
 #if 0
 	    if(bq24192_is_usbin_present() == 0)
 		    popup_usb_select_window(2);
-#endif
 	    break;
+#endif
 	default:
 	    printk("%s:defalt chg_type",__func__);
 	    break;
@@ -1124,7 +1124,7 @@ static void bq27530_enable_charging(struct bq27x00_device_info *di, bool enable)
         /*gpio_set_value_cansleep(di->board->chg_en_gpio, val);*/
         di->board->chg_en_flag = enable_flag; 
         /*printk("%s HIZ mode.\n",enable_flag?"disable":"enable");*/
-        for(i=0;i<6;i++){
+        for(i=0;i<5;i++){
             ret = bq27x00_read_i2c(di, BQ24192_REG_CTL_0, 1);
             if(ret > 0)
                 break;
@@ -1139,7 +1139,7 @@ static void bq27530_enable_charging(struct bq27x00_device_info *di, bool enable)
                 data &= ~BQ24192_0_HIZ;
             else
                 data |= BQ24192_0_HIZ;
-            for(i=0;i<6;i++){
+            for(i=0;i<5;i++){
                 ret = bq27x00_write_i2c(di,BQ24192_REG_CTL_0,1,&data,0);
                 if(ret>0)
                     break;
@@ -1323,9 +1323,8 @@ static void bq27x00_charger_ovp(struct work_struct *work)
 static void bq27x00_battery_poll(struct work_struct *work)
 {
 	int vbus_state;
-#if 0
 	int ret;
-#endif
+	int ext;
 	struct bq27x00_device_info *di =
 		container_of(work, struct bq27x00_device_info, work.work);
 
@@ -1341,29 +1340,31 @@ static void bq27x00_battery_poll(struct work_struct *work)
 		
 	bq27x00_update(di);
 
-#if 0
 	if(di->cache.voltage < 4050){
 		if((di->cache.temperature-2731) > 0 && (di->cache.temperature-2731) < 100){
-			ret = bq27531_data_flash_write(di,0x4a,6,20);//T0
+			ret = bq27531_data_flash_write(di,0x4a,2,192);//T0
 			if(ret < 0)
 				pr_err("%s:write err ret=%d.\n",__func__,ret);
-		} else if((di->cache.temperature-2731) >= 100 && (di->cache.temperature-2731) < 230){
-			ret = bq27531_data_flash_write(di,0x4a,7,50);//T1
+		} else if((di->cache.temperature-2731) >= 100 && (di->cache.temperature-2731) < 330){
+			ret = bq27531_data_flash_write(di,0x4a,2,144);//T1
 			if(ret < 0)
 				pr_err("%s:write err ret=%d.\n",__func__,ret);
 		}
 	}else if(di->cache.voltage >= 4050){
 		if((di->cache.temperature-2731) > 0 && (di->cache.temperature-2731) < 100){
-			ret = bq27531_data_flash_write(di,0x4a,6,15);//T0
+			ret = bq27531_data_flash_write(di,0x4a,2,96);//T0
 			if(ret < 0)
 				pr_err("%s:write err ret=%d.\n",__func__,ret);
-		} else if((di->cache.temperature-2731) >= 100 && (di->cache.temperature-2731) < 230){
-			ret = bq27531_data_flash_write(di,0x4a,7,30);//T1
+		} else if((di->cache.temperature-2731) >= 100 && (di->cache.temperature-2731) < 330){
+			ret = bq27531_data_flash_write(di,0x4a,2,32);//T1
+			ext = bq27531_data_flash_write(di,0x4a,7,30);//T1
 			if(ret < 0)
 				pr_err("%s:write err ret=%d.\n",__func__,ret);
+			if(ext < 0)
+				pr_err("%s:write err ret=%d.\n",__func__,ret);
+					
 		}
 	}
-#endif
 
 	dev_info(di->dev, "%s:chg_en=%d,chg-type=%d,mains_online=%d,usb_online=%d,usb_ovp=%d,chg_st=%d.\n",
 		__func__,di->board->chg_en_flag,di->chrg_type,di->mains_online,di->usb_online,di->usb_ovp,di->chg_state);
@@ -2202,7 +2203,7 @@ static int bq27531_charge_ic_reset(void)
 		return -1;
 	}
 
-        for(i=0;i<6;i++){
+        for(i=0;i<5;i++){
             ret = bq27x00_read_i2c(bqdi, BQ24192_REG_CTL_0, 1);
             if(ret > 0)
                 break;
@@ -2213,7 +2214,7 @@ static int bq27531_charge_ic_reset(void)
         }else{
             data = ret & 0xff;
             data &= ~BQ24192_0_HIZ;
-            for(i=0;i<6;i++){
+            for(i=0;i<5;i++){
                 ret = bq27x00_write_i2c(bqdi,BQ24192_REG_CTL_0,1,&data,0);
                 if(ret>0)
                     break;
@@ -2245,7 +2246,7 @@ return 0;
 		return -1;
 	}
 
-        for(i=0;i<6;i++){
+        for(i=0;i<5;i++){
             ret = bq27x00_read_i2c(bqdi, BQ24192_REG_CTL_0, 1);
             if(ret > 0)
                 break;
@@ -2256,7 +2257,7 @@ return 0;
         }else{
             data = ret & 0xff;
             data &= ~BQ24192_0_HIZ;
-            for(i=0;i<6;i++){
+            for(i=0;i<5;i++){
                 ret = bq27x00_write_i2c(bqdi,BQ24192_REG_CTL_0,1,&data,0);
                 if(ret>0)
                     break;
@@ -2583,7 +2584,7 @@ static int bq27531_data_flash_write(struct bq27x00_device_info *di,unsigned char
 	reg_addr = 0x40 + mod(data_offset,32);
 	old_reg_value = bq27x00_read(di, reg_addr, false);
 	usleep(500);
-	if(old_reg_value != new_reg_value && !read_only){
+	if(old_reg_value != new_reg_value){
 		//read old check sum
 		old_check_sum = bq27x00_read(di,BLOCK_DATA_CHECK_SUM_REG, false);
 		usleep(500);

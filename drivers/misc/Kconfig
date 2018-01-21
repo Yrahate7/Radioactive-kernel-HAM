@@ -40,6 +40,12 @@ config AD525X_DPOT_I2C
 	  To compile this driver as a module, choose M here: the
 	  module will be called ad525x_dpot-i2c.
 
+config NXP_TFA9890
+	depends on I2C
+	tristate "NXP TFA9890 Support"
+	---help---
+	  The NXP TFA9890 chip is used as a  smart PA Controller.
+
 config AD525X_DPOT_SPI
 	tristate "support SPI bus connection"
 	depends on AD525X_DPOT && SPI_MASTER
