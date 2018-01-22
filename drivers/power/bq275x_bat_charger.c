@@ -1342,11 +1342,11 @@ static void bq27x00_battery_poll(struct work_struct *work)
 
 	if(di->cache.voltage < 4050){
 		if((di->cache.temperature-2731) > 0 && (di->cache.temperature-2731) < 100){
-			ret = bq27531_data_flash_write(di,0x4a,2,192);//T0
+			ret = bq27531_data_flash_write(di,0x4a,2,224);//T0
 			if(ret < 0)
 				pr_err("%s:write err ret=%d.\n",__func__,ret);
 		} else if((di->cache.temperature-2731) >= 100 && (di->cache.temperature-2731) < 330){
-			ret = bq27531_data_flash_write(di,0x4a,2,144);//T1
+			ret = bq27531_data_flash_write(di,0x4a,2,168);//T1
 			if(ret < 0)
 				pr_err("%s:write err ret=%d.\n",__func__,ret);
 		}
@@ -1356,7 +1356,7 @@ static void bq27x00_battery_poll(struct work_struct *work)
 			if(ret < 0)
 				pr_err("%s:write err ret=%d.\n",__func__,ret);
 		} else if((di->cache.temperature-2731) >= 100 && (di->cache.temperature-2731) < 330){
-			ret = bq27531_data_flash_write(di,0x4a,2,32);//T1
+			ret = bq27531_data_flash_write(di,0x4a,2,56);//T1
 			ext = bq27531_data_flash_write(di,0x4a,7,30);//T1
 			if(ret < 0)
 				pr_err("%s:write err ret=%d.\n",__func__,ret);
